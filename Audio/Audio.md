@@ -55,6 +55,42 @@ endmodule
 
 Run that in the normal way and you should hear an A4 note.
 
+To run that using the Digilent PmodAmp2 in the top row of Mixmod3, closest to the USB connector, change the pcf file to:
+
+music.pcf:
+
+```
+set_io speaker 21
+set_io gain 22
+set_io shutdown 26
+
+set_io clk 60
+```
+
+and change the Verilog to:
+
+music.v:
+
+```verilog
+module music(clk, speaker, gain, shutdown);
+	input clk;
+	output speaker, gain, shutdown;
+	parameter clkdivider = 25000000/440/2;
+	
+	assign gain = 0;
+	assign shutdown = 1;
+
+	reg [16:0] counter;
+	always @(posedge clk) if(counter==0) counter <= clkdivider-1; else counter <= counter-1;
+
+	reg speaker;
+	always @(posedge clk) if(counter==0) speaker <= ~speaker;
+
+endmodule
+```
+
+![PmodAmp2](./pmodamp2.jpg)
+
 The fpga4fun.com site describes how to do more [interesting sounds][] like police sirens. [Here][here1] are [here][here2] are the BlackIce Mx version of those sound generators.
 
 [interesting sounds]:					https://www.fpga4fun.com/MusicBox2.html
@@ -66,7 +102,7 @@ The fpga4fun.com site describes how to do more [interesting sounds][] like polic
 The fpga4fun site goes on to give an [example of playing tunes][]. Here is a [BlackIce Mx version][] of that.
 
 [example of playing tunes]:				https://www.fpga4fun.com/MusicBox4.html
-[BlackIce Mx version]:					https://github.com/lawrie/verilog_examples/tree/master/fpgafun/music4
+[BlackIce Mx version]:					https://github.com/lawrie/blackicemxbook/tree/master/examples/audio/music4
 
 ## Audio streaming over a UART
 
@@ -97,8 +133,7 @@ module PWM(input clk, input RxD, output PWM_out);
 	always @(posedge clk) PWM_accumulator <= PWM_accumulator[7:0] + RxD_data_reg;
 
 	assign PWM_out = PWM_accumulator[8];
-end
-module
+endmodule
 ```
 Get the async_receiver.v and BaudTickGen.v files from fpga4fun.com.
 
@@ -124,7 +159,7 @@ To get better sound quality you can use the [Digilent i2s Pmod][].
 This requires a higher bandwidth music stream than uart can handle. You could read the mp3 file from the SD card reader, or you could stream data over QSPI from the STM32 or over SPI from a Raspberry Pi using the RPi header. See the chapter on the RPi header for how to do that.
 
 [Digilent i2s Pmod]:					https://store.digilentinc.com/pmod-i2s-stereo-audio-output/
-[img2]:									./I2SAudio.jpg "I2S Audio"
+[img2]:							./I2SAudio.jpg "I2S Audio"
 
 ## Microphones
 
@@ -137,5 +172,5 @@ There is the [Digilent MIC3 MEMS Microphone Pmod][].
 Here is [an example][] of using the microphone to stream audio to the i2s Pmod. The example needs some work on it to get the timing right.
 
 [Digilent MIC3 MEMS Microphone Pmod]:	https://store.digilentinc.com/pmod-mic3-mems-microphone-with-adjustable-gain/
-[img3]:					./Microphone.jpg "Microphone Pmod"
+[img3]:					https://cdn10.bigcommerce.com/s-7gavg/products/385/images/3862/Pmod_MIC3__04127.1456866882.1280.1280.png?c=2
 [an example]:				https://github.com/lawrie/verilog_examples/tree/master/fpgafun/microphone
